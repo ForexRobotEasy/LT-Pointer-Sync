@@ -1,0 +1,72 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                              LT Pointer Sync.mq5 |
+//|               Copyright 2022, Forex Robot Easy Team              |
+//|                                        https://forexroboteasy.com |
+//+------------------------------------------------------------------+
+
+#property version   '1.00'
+#property strict
+
+// Global variables
+input color HLineColor = Red;
+input color VLineColor = Blue;
+
+//+------------------------------------------------------------------+
+//| Custom indicator initialization function                         |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    // Add a middle mouse click event
+    ChartEventAdd(0, CHARTEVENT_MOUSE_MOVE, 0, 0);
+    ChartEventAdd(0, CHARTEVENT_OBJECT_ENDEDIT, 0, 0);
+    
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator deinitialization function                       |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Remove the middle mouse click event
+    ChartEventRemove(0, CHARTEVENT_MOUSE_MOVE);
+    ChartEventRemove(0, CHARTEVENT_OBJECT_ENDEDIT);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+void OnChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam)
+{
+    if (id == CHARTEVENT_MOUSE_MOVE && lparam & MOUSE_BUTTON_MIDDLE)
+    {
+        // Get the mouse coordinates
+        int x, y;
+        ChartGetInteger(0, CHART_MOUSE_X, x);
+        ChartGetInteger(0, CHART_MOUSE_Y, y);
+        
+        // Replicate the cross pointer across all open charts
+        for (int i = 0; i < WindowsTotal(); i++)
+        {
+            if (WindowHandle(i) != ChartID())
+            {
+                ChartNavigate(WindowHandle(i), x, y);
+            }
+        }
+    }
+    else if (id == CHARTEVENT_OBJECT_ENDEDIT)
+    {
+        // Create a horizontal or vertical line based on the object's name
+        string objectName = ObjectGetString(0, OBJPROP_NAME);
+        
+        if (StringFind(objectName, 'H') >= 0)
+        {
+            ObjectSetInteger(0, OBJPROP_COLOR, HLineColor);
+        }
+        else if (StringFind(objectName, 'V') >= 0)
+        {
+            ObjectSetInteger(0, OBJPROP_COLOR, VLineColor);
+        }
+    }
+}
